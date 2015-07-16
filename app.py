@@ -9,7 +9,6 @@ def index():
 
 @app.route('/results', methods=['POST'])
 def results():
-    #error = None
     id = user_exists(request.form['username'])
     if id:
         call = createItemSet(id)
