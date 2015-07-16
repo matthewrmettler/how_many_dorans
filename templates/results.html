@@ -9,11 +9,13 @@
 <div id="container">
     <div class="title">How Many Dorans?</div>
     <div id="content">
-        Hey {{ username }} !
+        Hey {{ username }} ! Out of the past {{ matches }} games of ranked...
         {% for i in items %}
-            <h1>{{ i.name }}</h1>
-            <h3>{{ i.count }}</h3>
-            <li><img src="{{ i.url }}" alt=""/>
+            <div class="item">
+                <h2>{{ i.name }}</h1>
+                <li><img src="{{ i.url }}" alt=""/>
+                <h3>{{ i.count }}</h3>
+            </div>
         {% endfor %}
     </div>
 </div>

@@ -33,7 +33,7 @@ def getItemsBought(summoner_id):
         #getMatchItems(getMatch(matchID), summoner_id, summoner_items)
     #print(len(matches))
     getMatchItems(getMatch(matches[0]), summoner_id, summoner_items) #test just 1 match to avoid rate limits
-    return summoner_items
+    return [summoner_items, len(matches)]
 
 def getMatch(match_id):
     """Load the match with a Riot API call"""

@@ -18,7 +18,9 @@ def getImageUrl(item_id):
 def createItemSet(summoner_id):
     print("Creating item sets for {0}".format(summoner_id))
     items_array = []
-    items_dict = getItemsBought(summoner_id)
+    api_call = getItemsBought(summoner_id)
+    items_dict = api_call[0]
+    matchNo = api_call[1]
     #sort items by most bought
     #print(items_dict)
     sorted_items_dict = sorted(items_dict.items(), key=operator.itemgetter(1), reverse=True) #convert to sorted tuples
@@ -31,4 +33,4 @@ def createItemSet(summoner_id):
         items_array.append(Item(i[0], i[1], static_items_dict[i[0]], getImageUrl(i[0])))
     #for i in items_array:
         #print(i)
-    return items_array
+    return [items_array, matchNo]

@@ -1,3 +1,7 @@
 body {
-    background-color: rosybrown;
+    background-color: dodgerblue;
+}
+
+.item {
+    border: solid 2px aliceblue;
 }
