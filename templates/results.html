@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>How Many Dorans?</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+<div id="container">
+    <div class="title">How Many Dorans?</div>
+    <div id="content">
+        Hey {{ username }} !
+        {% for i in items %}
+            <h1>{{ i.name }}</h1>
+            <h3>{{ i.count }}</h3>
+            <li><img src="{{ i.url }}" alt=""/>
+        {% endfor %}
+    </div>
+</div>
+
+</body>
+</html>
