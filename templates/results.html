@@ -12,9 +12,9 @@
         Hey {{ username }} ! Out of the past {{ matches }} games of ranked...
         {% for i in items %}
             <div class="item">
-                <h2>{{ i.name }}</h1>
-                <li><img src="{{ i.url }}" alt=""/>
-                <h3>{{ i.count }}</h3>
+                    <h3>{{ i.count }}</h3>
+                    <li><img src="{{ i.url }}" class="item_img" alt=""/>
+                    <h3>{{ i.name }}</h3>
             </div>
         {% endfor %}
     </div>

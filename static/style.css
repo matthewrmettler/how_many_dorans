@@ -1,7 +1,20 @@
 body {
     background-color: dodgerblue;
+    li: none;
 }
 
 .item {
-    border: solid 2px aliceblue;
+    text-align: center;
+    border: solid 1px aliceblue;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.item_img {
+    border: solid 1px black;
+    display: block;
+    width: 75px;
+    height: 75px;
+    margin-left: auto;
+    margin-right: auto;
 }
