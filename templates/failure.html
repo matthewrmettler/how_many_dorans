@@ -1,18 +1,30 @@
 <!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>How Many Dorans?</title>
+<html class="full" lang="en">
+<!-- Make sure the <html> tag is set to the .full CSS class. Change the background image in the full.css file. -->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="A site where you can see what you've bought over the years in League of Legends">
+    <meta name="author" content="Matthew Mettler">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>Summoner not found!</title>
 </head>
 <body>
-<div id="container">
-    <div class="title">How Many Dorans?</div>
-    <div id="content">
-    <h1>:(</h1>
-        Sorry, no summoner with the name {{ username }} could be found!
+    <div class="container">
+        <div class="content">
+            <img src="{{ url_for('static', filename='not_found.png') }}" style="border-radius: 5px" alt=""/>
+            <p>Sorry, no summoner with the name {{ username }} could be found!</p>
+             <button class="btn" onclick="goBack()">Go Back</button>
+        </div>
     </div>
-</div>
 
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
 </body>
 </html>

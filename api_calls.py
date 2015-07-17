@@ -29,8 +29,9 @@ def getItemsBought(summoner_id):
     summoner_items = {}
     matches = getMatches(summoner_id)
     #print(matches)
-    for matchID in matches:
-        getMatchItems(getMatch(matchID), summoner_id, summoner_items)
+    #for matchID in matches:
+        #getMatchItems(getMatch(matchID), summoner_id, summoner_items)
+    getMatchItems(getMatch(matches[0]), summoner_id, summoner_items)
     #print(len(matches))
     return [summoner_items, len(matches)]
 

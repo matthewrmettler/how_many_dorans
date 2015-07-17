@@ -1,20 +1,82 @@
-body {
-    background-color: dodgerblue;
-    li: none;
+/*!
+ * Start Bootstrap - Full HTML Template (http://startbootstrap.com)
+ * Code licensed under the Apache License v2.0.
+ * For details, see http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
+.full {
+    background: url('http://ddragon.leagueoflegends.com/cdn/img/champion/splash/Vayne_5.jpg') no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+    -o-background-size: cover;
+    color: #BBBBDD;
+}
+
+.container {
+    background-color: rgba(0, 0, 0, .00);
+    margin: 200px auto;
+}
+
+.content {
+    background-color: rgba(17, 17, 51, 0.75);
+    padding: 30px 15px;
+    text-align: center;
+}
+
+.btn {
+    border-radius: 6px;
+    border: 0;
+    color: #BBBBDD;
+    font-size: 14px;
+    background: #5555AA;
+    margin: 5px 5px;
+    padding: 5px 25px;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background: #8888BB;
+    text-decoration: none;
+}
+
+.input {
+    margin: 10px 5px;
+    padding: 5px 10px;
+    text-align: center;
+    background-color: rgba(151, 172, 220, 0.35);
+    border-radius: 2px;
+    border: 0;
+    color: #BBBBDD;
+}
+
+.label {
+    margin: 5px 5px;
+}
+
+.count {
+    text-align: center;
+    font-weight: bold;
+}
+
+table {
+    width:90%;
+}
+td {
+    width:30%;
+    position:relative;
+    background-color: rgba(17, 17, 51, 0.75);
+    border: 1px solid black;
 }
 
 .item {
-    text-align: center;
-    border: solid 1px aliceblue;
-    margin-left: auto;
-    margin-right: auto;
+    display: block;
+    margin: auto auto;
+    min-width: 100px;
+    min-height: 100px;
 }
 
 .item_img {
-    border: solid 1px black;
     display: block;
-    width: 75px;
-    height: 75px;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto;
 }
