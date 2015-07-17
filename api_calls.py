@@ -6,7 +6,7 @@ This python file contains all the necessary functions needed to make calls to th
 """
 import requests
 from time import sleep
-from key import key
+from api_key import key
 __author__ = 'Matt'
 
 def user_exists(username):
