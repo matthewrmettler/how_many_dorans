@@ -99,7 +99,7 @@ def zip_item_set(item_set):
     max_length = max(len(temp[0]), len(temp[1]), len(temp[2]), len(temp[3]))
     for type in temp:
         while (len(type) < max_length):
-            type.append(Item("","","","http://ddragon.leagueoflegends.com/cdn/5.2.1/img/ui/items.png"))
+            type.append(Item("","","No item found","http://ddragon.leagueoflegends.com/cdn/5.2.1/img/ui/items.png"))
     result = zip(temp[0], temp[1], temp[2], temp[3])
     print(result)
     return result
