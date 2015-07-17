@@ -86,6 +86,7 @@ td {
     text-align: center;
     border: 1px solid black;
 }
+
 .item {
     display: block;
 }
@@ -100,4 +101,17 @@ td {
 .name {
     text-align: center;
     font-style: italic;
+}
+
+.warning {
+    padding: 5px 5px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.notice {
+    padding: 5px 5px;
+    text-align: center;
+    font-style: italic;
+    font-size: 11px;
 }

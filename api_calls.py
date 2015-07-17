@@ -6,9 +6,8 @@ This python file contains all the necessary functions needed to make calls to th
 """
 import requests
 from time import sleep
+from key import key
 __author__ = 'Matt'
-"""Please don't deploy like this you dummy"""
-key = "efaea909-5db0-45b4-aed3-325fe5c1f4eb"
 
 def user_exists(username):
     """
