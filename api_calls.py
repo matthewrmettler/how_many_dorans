@@ -25,10 +25,10 @@ def getItemsBought(summoner_id):
     :return: Dictionary file that contains what items the user bought.
     """
     print("Getting items bought for {0}".format(summoner_id))
-    sleep(2.5)
+    sleep(1.0)
     summoner_items = {}
     matches = getMatches(summoner_id)
-    #matches = matches[:-13] #shorten the list so its more manageable with lower API
+    matches = matches[:-5] #shorten the list so its more manageable with lower API
     #print(matches)
     for matchID in matches:
         getMatchItems(getMatch(matchID), summoner_id, summoner_items)
@@ -38,7 +38,7 @@ def getItemsBought(summoner_id):
 
 def getMatch(match_id):
     """Load the match with a Riot API call"""
-    sleep(1.2)
+    sleep(1.0)
     match_call = requests.get("https://na.api.pvp.net/api/lol/na/v2.2/match/{0}?includeTimeline=true&api_key={1}".format(match_id, key))
     #print(match_call.status_code)
     if int(match_call.status_code) == 200: return match_call.json()
@@ -51,7 +51,7 @@ def callAPI(url, param):
     :param param: Additional parameters, such as summoner ID.
     :return: The requests response from the API call.
     """
-    sleep(1.2)
+    sleep(1.0)
     return requests.get("https://na.api.pvp.net/{0}{1}{2}{3}".format(url, param, "?api_key=", key))
 
 def getSummonerIDByName(summoner_name):
@@ -80,13 +80,13 @@ def getMatchHistory(summoner_id, beginIndex, justSolo=True):
     print("Getting match history for {0} at index {1}".format(summoner_id, beginIndex))
     global key
 
-    sleep(1.2)
+    sleep(1.0)
     matches_call = requests.get("https://na.api.pvp.net/api/lol/na/v2.2/matchhistory/{0}?{1}beginIndex={2}&api_key={3}".format(summoner_id, "rankedQueues=RANKED_SOLO_5x5&" if justSolo else "", beginIndex, key))
     #print(matches_call.status_code)
     if matches_call.status_code != 200: return False
     return matches_call
 
-def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex=30):
+def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex=15):
     """
     Get the match IDs for matches played by the user.
     :param summoner_id: ID identifying the user (assigned by Riot Games)
@@ -112,7 +112,7 @@ def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex
                 break
         index += 15
         if index >= maxIndex: break
-        sleep(1.2) #sleep for rito
+        sleep(1.0) #sleep for rito
     return matches
 
 def getParticipantId(match, summoner_id):
