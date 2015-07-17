@@ -12,6 +12,7 @@ def results():
     id = user_exists(request.form['username'])
     if id:
         call = createItemSet(id)
+        print("createItemSet finished")
         item_set = call[0]
         match_count = call[1]
         print(match_count)

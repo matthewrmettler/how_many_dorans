@@ -1,6 +1,6 @@
 __author__ = 'Matt'
 from api_calls import getItemsBought
-from items import static_items_dict
+from items import static_items_dict, item_id_adjust
 import urllib2
 import json
 
@@ -14,7 +14,7 @@ class Item:
         self.name = name
         self.url = url
         self.type = -1
-        print("item created! {0} {1} {2} {3}".format(id, count, name, url))
+        print(self)
 
     def __repr__(self):
         return "{0} (ID {1}, Count {2}, Type {3})".format(self.name, self.id, self.count, self.type)
@@ -29,20 +29,18 @@ def createItemSet(summoner_id):
     print("Creating item sets for {0}".format(summoner_id))
     items_array = []
     api_call = getItemsBought(summoner_id)
+    print("getItemsBought finished")
     items_dict = api_call[0]
     matchNo = api_call[1]
-    #sort items by most bought
-    #print(items_dict)
+    print(matchNo)
     sorted_items_dict = sorted(items_dict.items(), key=operator.itemgetter(1), reverse=True) #convert to sorted tuples
-    #print(sorted_items_dict)
+    print(sorted_items_dict)
     for i in sorted_items_dict:
-        #print(i[0])
-        #print(i[1])
-        #print(static_items_dict[i[0]])
-        #print(getImageUrl(i[0]))
-        items_array.append(Item(i[0], i[1], static_items_dict[i[0]], getImageUrl(i[0])))
-    #for i in items_array:
-        #print(i)
+        vID = verify_id(i[0])
+        if (vID):
+            items_array.append(Item(vID, i[1], getName(vID), getImageUrl(vID)))
+        else:
+            continue
     final_array = categorize(items_array)
     return [final_array, matchNo]
 
@@ -103,3 +101,17 @@ def zip_item_set(item_set):
     result = zip(temp[0], temp[1], temp[2], temp[3])
     print(result)
     return result
+
+def verify_id(item_id):
+    if item_id in static_items_dict:
+        print("Verified {0}".format(item_id))
+        return item_id
+    elif item_id in item_id_adjust:
+        print("Changed {0} to {1}".format(item_id, item_id_adjust[item_id]))
+        return item_id_adjust[item_id]
+    else:
+        print("{0} not found, skipping".format(item_id))
+        return False
+
+def getName(item_id):
+    return static_items_dict[item_id]

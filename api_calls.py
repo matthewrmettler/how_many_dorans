@@ -28,6 +28,7 @@ def getItemsBought(summoner_id):
     sleep(2.5)
     summoner_items = {}
     matches = getMatches(summoner_id)
+    #matches = matches[:-13] #shorten the list so its more manageable with lower API
     #print(matches)
     for matchID in matches:
         getMatchItems(getMatch(matchID), summoner_id, summoner_items)
@@ -37,6 +38,7 @@ def getItemsBought(summoner_id):
 
 def getMatch(match_id):
     """Load the match with a Riot API call"""
+    sleep(1.2)
     match_call = requests.get("https://na.api.pvp.net/api/lol/na/v2.2/match/{0}?includeTimeline=true&api_key={1}".format(match_id, key))
     #print(match_call.status_code)
     if int(match_call.status_code) == 200: return match_call.json()
@@ -84,7 +86,7 @@ def getMatchHistory(summoner_id, beginIndex, justSolo=True):
     if matches_call.status_code != 200: return False
     return matches_call
 
-def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex=15):
+def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex=30):
     """
     Get the match IDs for matches played by the user.
     :param summoner_id: ID identifying the user (assigned by Riot Games)
@@ -122,7 +124,7 @@ def getParticipantId(match, summoner_id):
     :param summoner_id: ID identifying the user (assigned by Riot Games)
     :return: An integer associated with our user, for use in other methods.
     """
-    print("Checking match {0} for summoner's participant ID...".format(str(match["matchId"])))
+    #print("Checking match {0} for summoner's participant ID...".format(str(match["matchId"])))
     participants = match["participantIdentities"]
     for p in participants:
         if p["player"]["summonerId"] == summoner_id:
