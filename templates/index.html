@@ -16,12 +16,12 @@
     <div class="container">
         <div class="content">
             <form method="post" action="{{ url_for('results') }}">
-                <label class="label" for="username">Enter your summoner name and see what you've bought in Ranked! <br/>
+                <label class="label" for="username">Enter your summoner name and see what you've bought in Ranked!<br/>
                     <input class="input" type="text" name="username"/> <br/>
                 </label>
             <button class="btn" type="submit">Submit</button>
             </form>
-            <p class="warning">This is still in development -- it may take up to 30 seconds to run due to rate limits, and will only include your most recent 10 matches.<br/> Thank you for your patience. :)</p>
+            <p class="warning">This is still in development -- <b>This only works for NA accounts</b>, it may take up to 30 seconds to run due to rate limits, and will only include your most recent 10 matches.<br/> Thank you for your patience. :)</p>
             <p class="notice">How Many Dorans isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends. <br/>
             League of Legends and Riot Games are trademarks or registered trademarks of Riot Games, Inc. League of Legends © Riot Games, Inc.</p>
         </div>
