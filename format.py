@@ -29,21 +29,24 @@ def createItemSet(summoner_id, start_time):
     #print(u"{0} --- Creating item sets for {1}".format(format(start_time), summoner_id))
     items_array = []
     api_call = getItemsBought(summoner_id, start_time)
+    print(api_call)
     if hasattr(api_call, 'status_code'): return api_call #error check
     #print("getItemsBought finished")
     items_dict = api_call[0]
     matchNo = api_call[1]
-    #print(matchNo)
+
     sorted_items_dict = sorted(items_dict.items(), key=operator.itemgetter(1), reverse=True) #convert to sorted tuples
-    #print(sorted_items_dict)
+
     for i in sorted_items_dict:
         vID = verify_id(i[0])
         if (vID):
             items_array.append(Item(vID, i[1], getName(vID), getImageUrl(vID)))
         else:
             continue
+
     final_array = categorize(items_array)
     #print("{0} --- item sets made".format(datetime.utcnow()))
+
     return [final_array, matchNo]
 
 def categorize(item_set):
@@ -85,6 +88,9 @@ def zip_item_set(item_set):
     """
     #print("Zipping item set.")
     temp = [[],[],[],[]]
+
+    for item in item_set:
+            temp[4-item.type].append(item) #want type 4 in index 0
 
     max_length = max(len(temp[0]), len(temp[1]), len(temp[2]), len(temp[3]))
     for type in temp:

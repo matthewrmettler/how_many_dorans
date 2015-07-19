@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from api_key import key
 __author__ = 'Matt'
 
-max_time = 25
+max_time = 27
 def callAPI(url, id, param, start_time, attemptNo=0):
     """
     For ease of use, simpler API calls use this method.
@@ -23,7 +23,7 @@ def callAPI(url, id, param, start_time, attemptNo=0):
 
     current_time = datetime.utcnow()
     time_since = current_time - start_time
-    print(time_since)
+    #print(time_since)
 
     r = u"https://na.api.pvp.net/{0}{1}{2}{3}{4}".format(url, id, param, "api_key=", key)
     call = requests.get(r)
@@ -40,7 +40,7 @@ def callAPI(url, id, param, start_time, attemptNo=0):
     if call.status_code == 200: #everything's fine
         return call
     else:
-        print(call.status_code)
+        #print(call.status_code)
         attemptNo += 1
         if attemptNo >= 8: #if it doesnt work after 8 tries, give up
             return call
@@ -107,6 +107,7 @@ def getItemsBought(summoner_id, start_time):
             count += 1
         else:
             return m
+    print(summoner_items)
     return [summoner_items, count]
 
 def getMatches(summoner_id, start_time, includeSeason4=False, includeSeason3=False, maxIndex=15):
@@ -166,7 +167,7 @@ def getMatch(match_id, start_time):
     :return: A JSON object representing the match, or an error code representing that it wasn't found.
     """
     match_call = callAPI("api/lol/na/v2.2/match/", match_id, "?includeTimeline=true&", start_time)
-    print(match_call.status_code)
+    #print(match_call.status_code)
     if int(match_call.status_code) == 200: return match_call.json()
     return match_call
 
@@ -190,7 +191,7 @@ def getMatchItems(match, summoner_id, summoner_items):
                         summoner_items[item] += 1
                     else:
                         summoner_items[item] = 1
-    return True
+    return False
 
 def getParticipantId(match, summoner_id):
     """
