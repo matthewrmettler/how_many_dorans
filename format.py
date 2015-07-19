@@ -1,6 +1,7 @@
 __author__ = 'Matt'
 from api_calls import getItemsBought
 from items import static_items_dict, item_id_adjust
+from datetime import datetime
 import urllib2
 import json
 
@@ -14,7 +15,7 @@ class Item:
         self.name = name
         self.url = url
         self.type = -1
-        print(self)
+        #print(self)
 
     def __repr__(self):
         return "{0} (ID {1}, Count {2}, Type {3})".format(self.name, self.id, self.count, self.type)
@@ -29,12 +30,13 @@ def createItemSet(summoner_id):
     print("Creating item sets for {0}".format(summoner_id))
     items_array = []
     api_call = getItemsBought(summoner_id)
-    print("getItemsBought finished")
+    if hasattr(api_call, 'status_code'): return api_call #error check
+    #print("getItemsBought finished")
     items_dict = api_call[0]
     matchNo = api_call[1]
-    print(matchNo)
+    #print(matchNo)
     sorted_items_dict = sorted(items_dict.items(), key=operator.itemgetter(1), reverse=True) #convert to sorted tuples
-    print(sorted_items_dict)
+    #print(sorted_items_dict)
     for i in sorted_items_dict:
         vID = verify_id(i[0])
         if (vID):
@@ -42,6 +44,7 @@ def createItemSet(summoner_id):
         else:
             continue
     final_array = categorize(items_array)
+    print("{0} --- item sets made".format(datetime.utcnow()))
     return [final_array, matchNo]
 
 def categorize(item_set):
@@ -51,8 +54,8 @@ def categorize(item_set):
     :param item_set:
     :return:
     """
-    print("categorizing stuff")
-    print(item_set)
+    #print("categorizing stuff")
+    #print(item_set)
     response = urllib2.urlopen('http://ddragon.leagueoflegends.com/cdn/5.13.1/data/en_US/item.json')
     json_result = json.load(response)
     data = json_result["data"]
@@ -61,23 +64,23 @@ def categorize(item_set):
         if id in data:
             if "tags" in data[id]:
                 if "Consumable" in data[id]["tags"]:
-                    print("Giving item {0} type 1").format(item)
+                    #print("Giving item {0} type 1").format(item)
                     item.type = 1
                     continue
             if "from" in data[id]:
                 if "into" in data[id]:
                     if len(data[id]["into"]) > 0: #botrk has empty into, so i need to check
-                        print("Giving item {0} type 3").format(item)
+                        #print("Giving item {0} type 3").format(item)
                         item.type = 3
                     else:
-                        print("Giving item {0} type 4").format(item)
+                        #print("Giving item {0} type 4").format(item)
                         item.type = 4
             else: #nothing builds into this item, so it's a basic item
-                print("Giving item {0} type 2").format(item)
+                #print("Giving item {0} type 2").format(item)
                 item.type = 2
-    print("after:\n")
+    #print("after:\n")
     new_item_set = zip_item_set(item_set)
-    print(new_item_set)
+    #print(new_item_set)
     return new_item_set
 
 def zip_item_set(item_set):
@@ -89,28 +92,28 @@ def zip_item_set(item_set):
     :param item_set: The item set to be zipped
     :return: A zipped list of tuples
     """
-    print("Zipping item set.")
+    #print("Zipping item set.")
     temp = [[],[],[],[]]
     for item in item_set:
         temp[4-item.type].append(item) #want type 4 in index 0
-    print(temp)
+    #print(temp)
     max_length = max(len(temp[0]), len(temp[1]), len(temp[2]), len(temp[3]))
     for type in temp:
         while (len(type) < max_length):
             type.append(Item("","","","http://ddragon.leagueoflegends.com/cdn/5.2.1/img/ui/items.png"))
     result = zip(temp[0], temp[1], temp[2], temp[3])
-    print(result)
+    #print(result)
     return result
 
 def verify_id(item_id):
     if item_id in static_items_dict:
-        print("Verified {0}".format(item_id))
+        #print("Verified {0}".format(item_id))
         return item_id
     elif item_id in item_id_adjust:
-        print("Changed {0} to {1}".format(item_id, item_id_adjust[item_id]))
+        print("Changed id {0} to {1}".format(item_id, item_id_adjust[item_id]))
         return item_id_adjust[item_id]
     else:
-        print("{0} not found, skipping".format(item_id))
+        #print("{0} not found, skipping".format(item_id))
         return False
 
 def getName(item_id):

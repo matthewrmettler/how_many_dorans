@@ -16,7 +16,9 @@
     <div class="container">
         <div class="content">
             <img src="{{ url_for('static', filename='not_found.png') }}" style="border-radius: 5px" alt=""/>
-            <p>Sorry, no summoner with the name {{ username }} could be found!</p>
+            <p>Sorry, something went wrong! Here's what happened:</p>
+            <p> {{ error }}</p>
+            <p>If you want to help out, please <a href="mailto:matthewrmettler@gmail.com?Subject=How%20Many%20Dorans:%20Error%20{{ error_code }}" target="_top">let me know what went wrong</a> and I'll do my best to fix it and get back to you!</p>
              <button class="btn" onclick="goBack()">Go Back</button>
         </div>
     </div>

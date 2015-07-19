@@ -6,6 +6,7 @@ This python file contains all the necessary functions needed to make calls to th
 """
 import requests
 from time import sleep
+from datetime import datetime
 from api_key import key
 __author__ = 'Matt'
 
@@ -15,6 +16,7 @@ def user_exists(username):
     :param username: What the user types into our form.
     :return: True if this is an actual League of Legends account.
     """
+    #print("checking if {0} is a summoner...").format(username)
     return getSummonerIDByName(username)
 
 def getItemsBought(summoner_id):
@@ -24,9 +26,10 @@ def getItemsBought(summoner_id):
     :return: Dictionary file that contains what items the user bought.
     """
     print("Getting items bought for {0}".format(summoner_id))
-    sleep(1.0)
+    #sleep(1.0)
     summoner_items = {}
     matches = getMatches(summoner_id)
+    if hasattr(matches, 'status_code'): return matches #error check
     matches = matches[:-5] #shorten the list so its more manageable with lower API
     #print(matches)
     for matchID in matches:
@@ -37,21 +40,49 @@ def getItemsBought(summoner_id):
 
 def getMatch(match_id):
     """Load the match with a Riot API call"""
-    sleep(1.0)
-    match_call = requests.get("https://na.api.pvp.net/api/lol/na/v2.2/match/{0}?includeTimeline=true&api_key={1}".format(match_id, key))
+    #sleep(1.0)
+    match_call = callAPI("api/lol/na/v2.2/match/", match_id, "?includeTimeline=true&")
+    #match_call = requests.get("https://na.api.pvp.net/api/lol/na/v2.2/match/{0}?includeTimeline=true&api_key={1}".format(match_id, key))
     #print(match_call.status_code)
     if int(match_call.status_code) == 200: return match_call.json()
     return False
 
-def callAPI(url, param):
+def callAPI(url, id, param, attemptNo=0):
     """
     For ease of use, simpler API calls use this method.
     :param url: The specific type of API call being made
     :param param: Additional parameters, such as summoner ID.
     :return: The requests response from the API call.
     """
-    sleep(1.0)
-    return requests.get("https://na.api.pvp.net/{0}{1}{2}{3}".format(url, param, "?api_key=", key))
+    #sleep(1.0)
+    r = "https://na.api.pvp.net/{0}{1}{2}{3}{4}".format(url, id, param, "api_key=", key)
+    #print(r)
+    call = requests.get(r)
+
+    if call.status_code == 200: #everything's fine
+        return call
+    else:
+        print(call.status_code)
+        attemptNo += 1
+        if attemptNo >= 8: #if it doesnt work after 8 tries, give up
+            return call
+        if call.status_code == 400: #Bad request -- something is wrong with my code, show an error, DO NOT keep making calls
+            #do something about this
+            return call
+        if call.status_code == 401: #Unauthorized -- my api key isn't valid, show a page for this
+            #do something about this
+            return call
+        if call.status_code == 404: #item not found -- do something about this
+            return call
+        if call.status_code == 429: #Rate limit exceeded -- wait a few seconds
+            sleep(1.2)
+            return callAPI(url, id, param, attemptNo)
+        if call.status_code == 500: #Internal server error -- something wrong on riot's end -- wait?
+            sleep(5.0)
+            return callAPI(url, id, param, attemptNo)
+        if call.status_code == 503: #service unavailable -- something wrong on riot's end
+            sleep(5.0)
+            return callAPI(url, id, param, attemptNo)
 
 def getSummonerIDByName(summoner_name):
     """
@@ -60,12 +91,14 @@ def getSummonerIDByName(summoner_name):
     :param summoner_name: The username of the user in League of Legends.
     :return: An integer associated with the user, for use in every API call going forward.
     """
-    summoner_data = callAPI("api/lol/na/v1.4/summoner/by-name/", summoner_name)
-    if summoner_data.status_code != 200: return False
-    summoner_name = summoner_data.json().keys()[0]
-    summoner_id = summoner_data.json()[summoner_name]["id"]
-    print("Summoner ID: {0}".format(summoner_id))
-    return summoner_id
+    summoner_data = callAPI("api/lol/na/v1.4/summoner/by-name/", summoner_name, "?")
+    if summoner_data.status_code == 200:
+        summoner_name = summoner_data.json().keys()[0]
+        summoner_id = summoner_data.json()[summoner_name]["id"]
+        print("Summoner ID: {0}".format(summoner_id))
+        return summoner_id
+    else:
+        return summoner_data
 
 def getMatchHistory(summoner_id, beginIndex, justSolo=True):
     """
@@ -79,10 +112,9 @@ def getMatchHistory(summoner_id, beginIndex, justSolo=True):
     print("Getting match history for {0} at index {1}".format(summoner_id, beginIndex))
     global key
 
-    sleep(1.0)
-    matches_call = requests.get("https://na.api.pvp.net/api/lol/na/v2.2/matchhistory/{0}?{1}beginIndex={2}&api_key={3}".format(summoner_id, "rankedQueues=RANKED_SOLO_5x5&" if justSolo else "", beginIndex, key))
-    #print(matches_call.status_code)
-    if matches_call.status_code != 200: return False
+    #sleep(1.0)
+    param = "{0}beginIndex={1}&".format(("?rankedQueues=RANKED_SOLO_5x5&" if justSolo else "?"), beginIndex)
+    matches_call = callAPI("api/lol/na/v2.2/matchhistory/",summoner_id, param)
     return matches_call
 
 def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex=15):
@@ -99,6 +131,7 @@ def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex
     matches = []
     while(pullData):
         match_json = getMatchHistory(summoner_id, index).json()
+        if hasattr(match_json, 'status_code'): return match_json #error check
         if not match_json: break
         if not "matches" in match_json: break
         for match in match_json["matches"][::-1]: #reverse array to get more recent games first
@@ -111,7 +144,7 @@ def getMatches(summoner_id, includeSeason4=False, includeSeason3=False, maxIndex
                 break
         index += 15
         if index >= maxIndex: break
-        sleep(1.0) #sleep for rito
+        #sleep(1.0) #sleep for rito
     return matches
 
 def getParticipantId(match, summoner_id):
@@ -138,7 +171,7 @@ def getMatchItems(match, summoner_id, summoner_items):
     :param summoner_items: The dictionary that we update for each match, containing the number of items the user bought.
     :return:
     """
-    print("Checking match {0} for items...".format(str(match["matchId"])))
+    print("{0}  -- Checking match {1} for items...".format(datetime.utcnow(), str(match["matchId"])))
     pID = getParticipantId(match, summoner_id)
     timeline_frames = match["timeline"]["frames"]
     #print(len(timeline_frames))
