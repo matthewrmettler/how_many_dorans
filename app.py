@@ -16,7 +16,9 @@ def results():
     """
     start_time = datetime.utcnow()
     id = userExists(request.form['username'], start_time)
-    if not hasattr(id, 'status_code'):
+    if (isinstance( id, int)):
+        return error_render(id, request.form['username'])
+    else:
         call = createItemSet(id, start_time)
         if not hasattr(call, 'status_code'):
             item_set = call[0]
@@ -24,8 +26,6 @@ def results():
             return render_template("results.html", username=request.form['username'], items=item_set, matches=match_count)
         else:
             return error_render(call.status_code)
-    else:
-        return error_render(id.status_code, request.form['username'])
 
 def error_render(status_code, param=""):
     """

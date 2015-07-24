@@ -11,6 +11,7 @@ from api_key import key
 __author__ = 'Matt'
 
 max_time = 27
+timeout_length = 5.0
 def callAPI(url, id, param, start_time, attemptNo=0):
     """
     For ease of use, simpler API calls use this method.
@@ -26,38 +27,50 @@ def callAPI(url, id, param, start_time, attemptNo=0):
     #print(time_since)
 
     r = u"https://na.api.pvp.net/{0}{1}{2}{3}{4}".format(url, id, param, "api_key=", key)
-    call = requests.get(r)
+    call = ""
+    try:
+        call = requests.get(r, timeout=timeout_length)
+    except requests.exceptions.Timeout as e:
+        # Try again
+        print(e)
+        attemptNo += 1
+        return callAPI(url, id, param, start_time, attemptNo)
+    except requests.exceptions.TooManyRedirects as e:
+        # Tell the user their URL was bad and try a different one
+        print(e)
+        return 400
+    except requests.exceptions.RequestException as e:
+        # catastrophic error. bail.
+        print(e)
+        return 400
 
     if (time_since > timedelta(seconds=max_time)):
         #heroku is going to crash soon, just end
         print("Times up!")
         print(call)
-        print(call.status_code)
-        call.status_code = 429
-        print(call.status_code)
-        return call
+        return 400
 
     if call.status_code == 200: #everything's fine
         return call
     else:
-        #print(call.status_code)
+        print(call.status_code)
         attemptNo += 1
         if attemptNo >= 8: #if it doesnt work after 8 tries, give up
             return call
         if call.status_code == 400: #Bad request -- something is wrong with my code, show an error, DO NOT keep making calls
-            return call
+            return 400
         if call.status_code == 401: #Unauthorized -- my api key isn't valid, show a page for this
-            return call
+            return 401
         if call.status_code == 404: #item not found -- do something about this
-            return call
+            return 404
         if call.status_code == 429: #Rate limit exceeded -- wait a few seconds
             sleep(1.2)
             return callAPI(url, id, param, start_time, attemptNo)
         if call.status_code == 500: #Internal server error -- something wrong on riot's end -- wait?
-            sleep(5.0)
+            sleep(1.2)
             return callAPI(url, id, param, start_time, attemptNo)
         if call.status_code == 503: #service unavailable -- something wrong on riot's end
-            sleep(5.0)
+            sleep(1.2)
             return callAPI(url, id, param, start_time, attemptNo)
 
 def userExists(username, start_time):
@@ -68,7 +81,7 @@ def userExists(username, start_time):
     :return: True if this is an actual League of Legends account.
     """
     print(u"".format(username))
-    return getSummonerIDByName(username, start_time)
+    return str(getSummonerIDByName(username, start_time))
 
 def getSummonerIDByName(summoner_name, start_time):
     """
@@ -78,14 +91,15 @@ def getSummonerIDByName(summoner_name, start_time):
     :param start_time: The time at which the user asked to see his info. Used to track length of calls.
     :return: An integer associated with the user, for use in every API call going forward.
     """
-    summoner_data = callAPI("api/lol/na/v1.4/summoner/by-name/", summoner_name, "?", start_time)
-    if summoner_data.status_code == 200:
-        summoner_name = summoner_data.json().keys()[0]
-        summoner_id = summoner_data.json()[summoner_name]["id"]
-        print(u"Summoner ID: {0}".format(summoner_id))
-        return summoner_id
-    else:
-        return summoner_data
+    result = callAPI("api/lol/na/v1.4/summoner/by-name/", summoner_name, "?", start_time)
+
+    #error checking
+    if isinstance(result, int): return result
+
+    summoner_name = result.json().keys()[0]
+    summoner_id = result.json()[summoner_name]["id"]
+    print(u"Summoner ID: {0}".format(summoner_id))
+    return summoner_id
 
 def getItemsBought(summoner_id, start_time):
     """
@@ -96,17 +110,19 @@ def getItemsBought(summoner_id, start_time):
     """
     print(u"Getting items bought for {0}".format(summoner_id))
     summoner_items = {}
-    matches = getMatches(summoner_id, start_time)
-    if hasattr(matches, 'status_code'): return matches #error check
-    matches = matches[:-5] #shorten the list so its more manageable with lower API
+    result = getMatches(summoner_id, start_time)
+
+    #error checking
+    if isinstance(result, int): return result
+    matches = result[:-13] #shorten the list so its more manageable with lower API
     count = 0
     for matchID in matches:
         m = getMatch(matchID, start_time)
-        if not hasattr(m, 'status_code'):
-            getMatchItems(m, summoner_id, summoner_items)
-            count += 1
-        else:
-            return m
+        #error checking, skip broken matches
+        if isinstance(m, int): continue
+        getMatchItems(m, summoner_id, summoner_items)
+        count += 1
+
     print(summoner_items)
     return [summoner_items, count]
 
@@ -124,13 +140,15 @@ def getMatches(summoner_id, start_time, includeSeason4=False, includeSeason3=Fal
     index = 0
     matches = []
     while(pullData):
-        match_json = getMatchHistory(summoner_id, index, start_time).json()
-        if 'status' in match_json:
-            if 'status_code' in match_json['status']:
-                return match_json #error check
-        if not match_json: break
-        if not "matches" in match_json: break
-        for match in match_json["matches"][::-1]: #reverse array to get more recent games first
+        result = getMatchHistory(summoner_id, index, start_time).json()
+
+        #error checking
+        if isinstance(result, int): return result
+        if not result: return 400
+        if not "matches" in result: return 400
+
+        #everything should be good
+        for match in result["matches"][::-10]: #reverse array to get more recent games first
             #print([(match["season"] == "SEASON2015"), match["season"] == "SEASON2014", includeSeason4 == True, ((match["season"] == "SEASON2014") and includeSeason4 == True)])
             if ( (match["season"] == "SEASON2015") or (match["season"] == "PRESEASON2015") or ((match["season"] == "SEASON2014") and includeSeason4 == True) or ((match["season"] == "PRESEASON2014") and includeSeason4 == True) or ((match["season"] == "SEASON2013") and includeSeason3 == True)):
                 matches.append(match["matchId"])
@@ -168,8 +186,8 @@ def getMatch(match_id, start_time):
     """
     match_call = callAPI("api/lol/na/v2.2/match/", match_id, "?includeTimeline=true&", start_time)
     #print(match_call.status_code)
-    if int(match_call.status_code) == 200: return match_call.json()
-    return match_call
+    if isinstance(match_call, int): return int
+    return match_call.json()
 
 def getMatchItems(match, summoner_id, summoner_items):
     """
@@ -179,6 +197,7 @@ def getMatchItems(match, summoner_id, summoner_items):
     :param summoner_items: The dictionary that we update for each match, containing the number of items the user bought.
     :return:
     """
+    print("getMatchItems")
     pID = getParticipantId(match, summoner_id)
     timeline_frames = match["timeline"]["frames"]
 
@@ -204,5 +223,5 @@ def getParticipantId(match, summoner_id):
     """
     participants = match["participantIdentities"]
     for p in participants:
-        if p["player"]["summonerId"] == summoner_id:
+        if p["player"]["summonerId"] == int(summoner_id):
             return p["participantId"]
