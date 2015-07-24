@@ -28,12 +28,12 @@ def callAPI(url, id, param, start_time, attemptNo=0):
 
     r = u"https://na.api.pvp.net/{0}{1}{2}{3}{4}".format(url, id, param, "api_key=", key)
     call = ""
+    attemptNo += 1
     try:
         call = requests.get(r, timeout=timeout_length)
     except requests.exceptions.Timeout as e:
         # Try again
         print(e)
-        attemptNo += 1
         return callAPI(url, id, param, start_time, attemptNo)
     except requests.exceptions.TooManyRedirects as e:
         # Tell the user their URL was bad and try a different one
@@ -47,14 +47,14 @@ def callAPI(url, id, param, start_time, attemptNo=0):
     if (time_since > timedelta(seconds=max_time)):
         #heroku is going to crash soon, just end
         print("Times up!")
-        print(call)
         return 400
+
+    if not hasattr(call, 'status_code'): return callAPI(url, id, param, start_time, attemptNo)
 
     if call.status_code == 200: #everything's fine
         return call
     else:
         print(call.status_code)
-        attemptNo += 1
         if attemptNo >= 8: #if it doesnt work after 8 tries, give up
             return call
         if call.status_code == 400: #Bad request -- something is wrong with my code, show an error, DO NOT keep making calls
@@ -114,12 +114,14 @@ def getItemsBought(summoner_id, start_time):
 
     #error checking
     if isinstance(result, int): return result
-    matches = result[:-13] #shorten the list so its more manageable with lower API
+    matches = result[:-10] #shorten the list so its more manageable with lower API
     count = 0
     for matchID in matches:
         m = getMatch(matchID, start_time)
         #error checking, skip broken matches
-        if isinstance(m, int): continue
+        if isinstance(m, int):
+            print("Getting match {0} failed".format(matchID))
+            continue
         getMatchItems(m, summoner_id, summoner_items)
         count += 1
 
@@ -148,7 +150,7 @@ def getMatches(summoner_id, start_time, includeSeason4=False, includeSeason3=Fal
         if not "matches" in result: return 400
 
         #everything should be good
-        for match in result["matches"][::-10]: #reverse array to get more recent games first
+        for match in result["matches"][::-1]: #reverse array to get more recent games first
             #print([(match["season"] == "SEASON2015"), match["season"] == "SEASON2014", includeSeason4 == True, ((match["season"] == "SEASON2014") and includeSeason4 == True)])
             if ( (match["season"] == "SEASON2015") or (match["season"] == "PRESEASON2015") or ((match["season"] == "SEASON2014") and includeSeason4 == True) or ((match["season"] == "PRESEASON2014") and includeSeason4 == True) or ((match["season"] == "SEASON2013") and includeSeason3 == True)):
                 matches.append(match["matchId"])
