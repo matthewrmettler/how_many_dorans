@@ -20,13 +20,12 @@ def callAPI(url, id, param, start_time, attemptNo=0):
     :param start_time: The time at which the user asked to see his info. Used to track length of calls.
     :return: The requests response from the API call.
     """
-    print(u"CallAPI: {0}|{1}|{2}|{3}|{4}".format(url, id, param, attemptNo, key))
-
     current_time = datetime.utcnow()
     time_since = current_time - start_time
     #print(time_since)
 
     r = u"https://na.api.pvp.net/{0}{1}{2}{3}{4}".format(url, id, param, "api_key=", key)
+    print(u"CallAPI: {req}".format(req = r))
     call = ""
     attemptNo += 1
     try:
@@ -55,6 +54,7 @@ def callAPI(url, id, param, start_time, attemptNo=0):
         return call
     else:
         print(call.status_code)
+        print(call.headers)
         if attemptNo >= 8: #if it doesnt work after 8 tries, give up
             return call
         if call.status_code == 400: #Bad request -- something is wrong with my code, show an error, DO NOT keep making calls
@@ -64,7 +64,11 @@ def callAPI(url, id, param, start_time, attemptNo=0):
         if call.status_code == 404: #item not found -- do something about this
             return 404
         if call.status_code == 429: #Rate limit exceeded -- wait a few seconds
-            sleep(1.2)
+            if 'Retry-After' in call.headers:
+                print("retry-after: {rt} ".format(rt=call.headers['Retry-After'] ))
+                sleep(float(call.headers['Retry-After']))
+            else:
+                sleep(1.2)
             return callAPI(url, id, param, start_time, attemptNo)
         if call.status_code == 500: #Internal server error -- something wrong on riot's end -- wait?
             sleep(1.2)
@@ -114,7 +118,7 @@ def getItemsBought(summoner_id, start_time):
 
     #error checking
     if isinstance(result, int): return result
-    matches = result[:-10] #shorten the list so its more manageable with lower API
+    matches = result[0:5] #shorten the list so its more manageable with lower API
     count = 0
     for matchID in matches:
         m = getMatch(matchID, start_time)
@@ -142,15 +146,12 @@ def getMatches(summoner_id, start_time, includeSeason4=False, includeSeason3=Fal
     index = 0
     matches = []
     while(pullData):
-        result = getMatchHistory(summoner_id, index, start_time).json()
 
-        #error checking
-        if isinstance(result, int): return result
-        if not result: return 400
-        if not "matches" in result: return 400
+        #result = getMatchHistory(summoner_id, index, start_time).json()
+        result = getMatchList(summoner_id, start_time)
 
         #everything should be good
-        for match in result["matches"][::-1]: #reverse array to get more recent games first
+        for match in result["matches"]:
             #print([(match["season"] == "SEASON2015"), match["season"] == "SEASON2014", includeSeason4 == True, ((match["season"] == "SEASON2014") and includeSeason4 == True)])
             if ( (match["season"] == "SEASON2015") or (match["season"] == "PRESEASON2015") or ((match["season"] == "SEASON2014") and includeSeason4 == True) or ((match["season"] == "PRESEASON2014") and includeSeason4 == True) or ((match["season"] == "SEASON2013") and includeSeason3 == True)):
                 matches.append(match["matchId"])
@@ -161,6 +162,36 @@ def getMatches(summoner_id, start_time, includeSeason4=False, includeSeason3=Fal
         index += 15
         if index >= maxIndex: break
     return matches
+
+def getMatchList(summoner_id, start_time, justSolo=True, includeSeason4=False, includeSeason3=False):
+    """
+    Riot introduced a new match history endpoint recently, called the match list. Match list has significantly
+    more matches than the match history endpoint, but it has less data. Since this app must make individual calls
+    on each match regardless (in order to see purchases), this new endpoint is much more useful than the old one.
+    I will be using this from now on, but will keep the match history code below until it is deprecated September 2015.
+    :param summoner_id: ID identifying the user (assigned by Riot Games)
+    :param start_time: The time at which the user asked to see his info. Used to track length of calls.
+    :param justSolo: Whether or not to include games where the player queued solo, or with a team.
+    :param includeSeason4: Include matches from Season 4 (Games played in 2014)
+    :param includeSeason3: Include matches from Season 3 (Games played in 2013)
+    :return: API call for the match history.
+    """
+    pass
+    param = "{0}".format(("?rankedQueues=RANKED_SOLO_5x5&" if justSolo else "?"))
+    result = callAPI("api/lol/na/v2.2/matchlist/by-summoner/", summoner_id, param, start_time)
+
+    #error checking
+    if isinstance(result, int):
+        return result
+    if not result:
+        return 400
+
+    result = result.json()
+
+    if not "matches" in result:
+        return 400
+
+    return result
 
 def getMatchHistory(summoner_id, beginIndex, start_time, justSolo=True):
     """
@@ -176,7 +207,7 @@ def getMatchHistory(summoner_id, beginIndex, start_time, justSolo=True):
     global key
 
     param = "{0}beginIndex={1}&".format(("?rankedQueues=RANKED_SOLO_5x5&" if justSolo else "?"), beginIndex)
-    matches_call = callAPI("api/lol/na/v2.2/matchhistory/",summoner_id, param, start_time)
+    matches_call = callAPI("api/lol/na/v2.2/matchhistory/", summoner_id, param, start_time)
     return matches_call
 
 def getMatch(match_id, start_time):
@@ -188,7 +219,8 @@ def getMatch(match_id, start_time):
     """
     match_call = callAPI("api/lol/na/v2.2/match/", match_id, "?includeTimeline=true&", start_time)
     #print(match_call.status_code)
-    if isinstance(match_call, int): return int
+    if isinstance(match_call, int):
+        return match_call
     return match_call.json()
 
 def getMatchItems(match, summoner_id, summoner_items):
