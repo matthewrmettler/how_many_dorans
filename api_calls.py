@@ -85,7 +85,7 @@ def userExists(username, start_time):
     :return: True if this is an actual League of Legends account.
     """
     print(u"".format(username))
-    return str(getSummonerIDByName(username, start_time))
+    return getSummonerIDByName(username, start_time)
 
 def getSummonerIDByName(summoner_name, start_time):
     """
@@ -103,7 +103,7 @@ def getSummonerIDByName(summoner_name, start_time):
     summoner_name = result.json().keys()[0]
     summoner_id = result.json()[summoner_name]["id"]
     print(u"Summoner ID: {0}".format(summoner_id))
-    return summoner_id
+    return str(summoner_id)
 
 def getItemsBought(summoner_id, start_time):
     """
@@ -150,6 +150,8 @@ def getMatches(summoner_id, start_time, includeSeason4=False, includeSeason3=Fal
         #result = getMatchHistory(summoner_id, index, start_time).json()
         result = getMatchList(summoner_id, start_time)
 
+        if isinstance(result, int):
+            return result
         #everything should be good
         for match in result["matches"]:
             #print([(match["season"] == "SEASON2015"), match["season"] == "SEASON2014", includeSeason4 == True, ((match["season"] == "SEASON2014") and includeSeason4 == True)])
@@ -179,7 +181,8 @@ def getMatchList(summoner_id, start_time, justSolo=True, includeSeason4=False, i
     pass
     param = "{0}".format(("?rankedQueues=RANKED_SOLO_5x5&" if justSolo else "?"))
     result = callAPI("api/lol/na/v2.2/matchlist/by-summoner/", summoner_id, param, start_time)
-
+    print(result)
+    print(type(result))
     #error checking
     if isinstance(result, int):
         return result

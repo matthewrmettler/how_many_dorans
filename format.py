@@ -30,7 +30,11 @@ def createItemSet(summoner_id, start_time):
     items_array = []
     api_call = getItemsBought(summoner_id, start_time)
     print(api_call)
-    if hasattr(api_call, 'status_code'): return api_call #error check
+
+    #error check
+    if isinstance(api_call, int):
+        return api_call
+
     #print("getItemsBought finished")
     items_dict = api_call[0]
     matchNo = api_call[1]
@@ -73,7 +77,11 @@ def categorize(item_set):
                     else:
                         item.type = 4
             else: #nothing builds into this item, so it's a basic item
-                item.type = 2
+                #check for biscuit
+                if (int(id) == 2009) or (int(id) == 2010):
+                    item.type = 1
+                else:
+                    item.type = 2
     new_item_set = zip_item_set(item_set)
     return new_item_set
 
