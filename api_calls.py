@@ -5,6 +5,7 @@ By Matthew Mettler (2015)
 This python file contains all the necessary functions needed to make calls to the Riot Games API.
 """
 import requests
+import grequests
 from time import sleep
 from datetime import datetime, timedelta
 from api_key import key
@@ -12,6 +13,7 @@ __author__ = 'Matt'
 
 max_time = 27
 timeout_length = 5.0
+
 def callAPI(url, id, param, start_time, attemptNo=0):
     """
     For ease of use, simpler API calls use this method.
@@ -77,6 +79,23 @@ def callAPI(url, id, param, start_time, attemptNo=0):
             sleep(1.2)
             return callAPI(url, id, param, start_time, attemptNo)
 
+def greq_match_call(match_urls):
+    print("{0}: greq_match_calls".format(datetime.now()))
+    rs = (grequests.get(r) for r in match_urls)
+    res = grequests.map(rs)
+    print(res)
+    print("{0}: greq_match_calls complete".format(datetime.now()))
+    res = [x.json() for x in res]
+    return res
+
+def make_greq_match_urls(match_list):
+    m_urls = []
+    for match_id in match_list[:100]:
+        match_url = u"https://na.api.pvp.net/{0}{1}{2}{3}{4}".format("api/lol/na/v2.2/match/", match_id, "?includeTimeline=true&", "api_key=", key)
+        m_urls.append(match_url)
+
+    return m_urls
+
 def userExists(username, start_time):
     """
     Check whether or not what the user typed in is an actual League of Legends player.
@@ -118,8 +137,24 @@ def getItemsBought(summoner_id, start_time):
 
     #error checking
     if isinstance(result, int): return result
-    matches = result[0:5] #shorten the list so its more manageable with lower API
+    matches = result[0:50] #shorten the list so its more manageable with lower API
     count = 0
+
+    #try chunking up the match results
+    #match_chunked = [ result[0:10], result[10:20], result[20:30], result[30:40], result[40:50] ]
+    match_results = []
+    #for matches in match_chunked:
+    m_urls = make_greq_match_urls(matches)
+    match_results += greq_match_call(m_urls)
+    for m in match_results:
+        if isinstance(m, int):
+            print("Getting match {0} failed".format(m))
+            continue
+        getMatchItems(m, summoner_id, summoner_items)
+        count += 1
+
+    #Old synchrous code, let's try greq above
+    """
     for matchID in matches:
         m = getMatch(matchID, start_time)
         #error checking, skip broken matches
@@ -130,6 +165,7 @@ def getItemsBought(summoner_id, start_time):
         count += 1
 
     print(summoner_items)
+    """
     return [summoner_items, count]
 
 def getMatches(summoner_id, start_time, includeSeason4=False, includeSeason3=False, maxIndex=15):
@@ -181,8 +217,8 @@ def getMatchList(summoner_id, start_time, justSolo=True, includeSeason4=False, i
     pass
     param = "{0}".format(("?rankedQueues=RANKED_SOLO_5x5&" if justSolo else "?"))
     result = callAPI("api/lol/na/v2.2/matchlist/by-summoner/", summoner_id, param, start_time)
-    print(result)
-    print(type(result))
+    #print(result)
+    #print(type(result))
     #error checking
     if isinstance(result, int):
         return result

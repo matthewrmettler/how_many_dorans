@@ -29,7 +29,6 @@ def createItemSet(summoner_id, start_time):
     #print(u"{0} --- Creating item sets for {1}".format(format(start_time), summoner_id))
     items_array = []
     api_call = getItemsBought(summoner_id, start_time)
-    print(api_call)
 
     #error check
     if isinstance(api_call, int):
