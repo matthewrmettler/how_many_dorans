@@ -8,7 +8,7 @@ import requests
 import grequests
 from time import sleep
 from datetime import datetime, timedelta
-from api_key import key
+from key import key
 __author__ = 'Matt'
 
 max_time = 27
