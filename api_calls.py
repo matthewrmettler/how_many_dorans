@@ -4,15 +4,23 @@ By Matthew Mettler (2015)
 
 This python file contains all the necessary functions needed to make calls to the Riot Games API.
 """
+from gevent.pool import Pool
+from gevent import monkey; monkey.patch_all() # patches stdlib
+
 import requests
 import grequests
+
 from time import sleep
 from datetime import datetime, timedelta
+from timeit import default_timer as timer
+
+import logging
 from key import key
 __author__ = 'Matt'
 
 max_time = 27
 timeout_length = 5.0
+info = logging.getLogger().info
 
 def call_api(url, id, param, start_time, attempt_no=0):
     """
@@ -79,17 +87,21 @@ def call_api(url, id, param, start_time, attempt_no=0):
             return call_api(url, id, param, start_time, attempt_no)
 
 
-def greq_match_call(match_urls):
-    print("{0}: greq_match_calls".format(datetime.now()))
-    rs = (grequests.get(r) for r in match_urls)
-    res = grequests.map(rs)
-    print(res)
-    print("{0}: greq_match_calls complete".format(datetime.now()))
-    res = [x.json() for x in res]
-    return res
+def gevent_match_call(url):
+    info("connecting %s" % url)
+    try: call = requests.get(url, timeout=timeout_length)
+    except IOError, e:
+        info("error %s reason: %s" % (url, e))
+    else:
+        if call.status_code == 200:
+            info("received match %s" % url)
+            return call.json()
+        else:
+            info("error processing match %s" % url)
+            return 404
 
 
-def make_greq_match_urls(match_list):
+def make_gevent_match_urls(match_list):
     m_urls = []
     for match_id in match_list[:100]:
         match_url = u"https://na.api.pvp.net/{0}{1}{2}{3}{4}".format("api/lol/na/v2.2/match/", match_id,
@@ -137,39 +149,33 @@ def get_items_bought(summoner_id, start_time):
     :param start_time: The time at which the user asked to see his info. Used to track length of calls.
     :return: Dictionary file that contains what items the user bought.
     """
-    print(u"Getting items bought for {0}".format(summoner_id))
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(msg)s")
+    info(u"Getting items bought for {0}".format(summoner_id))
     summoner_items = {}
     result = get_list_of_match_ids(summoner_id, start_time)
 
     # error checking
     if isinstance(result, int):
         return result
-    matches = result[0:10]  # shorten the list so its more manageable with lower API
+    matches = result[0:25]  # shorten the list so its more manageable with lower API
     count = 0
 
+    # gevent
     match_results = []
-    m_urls = make_greq_match_urls(matches)
-    match_results += greq_match_call(m_urls)
+    m_urls = make_gevent_match_urls(matches)
+    pool = Pool(50)
+    start = timer()
+
+    for res in pool.imap(gevent_match_call, m_urls):
+        match_results.append(res)
+        count += 1
+    info("%d matches took us %.2g seconds" % (len(m_urls), timer() - start))
+
     for m in match_results:
         if isinstance(m, int):
-            print("Getting match {0} failed".format(m))
             continue
         get_match_items(m, summoner_id, summoner_items)
-        count += 1
 
-    # Old synchronous code, let's try greq above
-    """
-    for matchID in matches:
-        m = get_match_by_id(matchID, start_time)
-        #error checking, skip broken matches
-        if isinstance(m, int):
-            print("Getting match {0} failed".format(matchID))
-            continue
-        get_match_items(m, summoner_id, summoner_items)
-        count += 1
-
-    print(summoner_items)
-    """
     return [summoner_items, count]
 
 
@@ -220,7 +226,7 @@ def get_match_list(summoner_id, start_time, just_solo=True):
         return 400
 
     result = result.json()
-    if result not in "matches":
+    if "matches" not in result:
         return 400
     return result
 
